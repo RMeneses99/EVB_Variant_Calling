@@ -1,0 +1,1 @@
+ancestral_genomes = {'/home/rmeneses/VSCode/Ancestral_genomes/CP054662.1_IS_annotated.gbk': '_R_', '/home/rmeneses/VSCode/Ancestral_genomes/NC_000913.gb': '_I_'}

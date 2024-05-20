@@ -38,7 +38,7 @@ ALLOWED_REF_GENOME_EXTENSIONS = [
                                 ".fasta",
                                 ".gff3",
                                 ".gbk",
-                                ".gk"]
+                                ".gb"]
 
 BRESEQ_SUB_DIR = [
                  "00_quality_check_reports", 
