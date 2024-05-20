@@ -102,9 +102,9 @@ def ask_usr(breseq=False):
                 while tag not in ancestral_genomes.values():
                     tag = input(f'Please provide a valid ancestral reference genome tag for the {"first" if i == 0 else "second"} isolate.\n')
                 co_evo.append(tag)
-            if input(f'Do you want to add another ancestral in this co-evolution? (Y or N)').strip().lower() != "y":
+            if input(f'Do you want to add another ancestral in this co-evolution? (Y or N)\n').strip().lower() != "y":
                     break
-            elif input(f'Do you want to add another ancestral in this co-evolution? (Y or N)').strip().lower() == "n":
+            elif input(f'Do you want to add another ancestral in this co-evolution? (Y or N)\n').strip().lower() == "n":
             # Loop to ask if the user wants to add more ancestral genomes
                 while True:
                     tag_plus = input(f'Please provide the ancestral reference genome tag.\n')
@@ -255,10 +255,11 @@ def pre_processing(data_path, hgt=False, remove_intermediate=False):
 
         # Determine reference genomes based on HGT flag
         if hgt:
+            ref_genomes = []
             # Check if any tag from ancestral_genomes is present in the sample name
-            for value in ancestral_genomes.values():
-                if value in fq_forward:
-                    ref_genomes = [k for k, value in ancestral_genomes.items()]
+            for tag in ancestral_genomes.values():
+                if tag in fq_forward:
+                    ref_genomes = [k for k, v in ancestral_genomes.items() if v==(tag)]
         else:
             ref_genomes = data_path[3]
 
@@ -283,7 +284,7 @@ def pre_processing(data_path, hgt=False, remove_intermediate=False):
                              ]
 
         # Run bbsplit reformat command
-        subprocess.run(bbsplit_reformat, check=True, capture_output=True)
+        subprocess.run(bbsplit_reformat,shell=True, check=True, capture_output=True)
 
         # Define intermediate files
         intermediate_files = [
