@@ -282,3 +282,11 @@ def fq_pre_processing(data_path=None, hgt=False, rm_inter_files=False, input_dir
 
 #def optmized_breseq(data_path):
     #for 
+
+def main():
+    ask_usr()
+    quali_check()
+    fq_pre_processing()
+
+
+__name__ = '__main___'

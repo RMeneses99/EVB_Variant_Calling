@@ -1,8 +1,13 @@
-import Toolkit
+import os
+import ast
 
-n1 = Toolkit.ask_usr()
-Toolkit.quali_check(n1)
-#n2 = Toolkit.pair_by(n1)
-#Toolkit.fq_pre_processing(n1, n2, hgt=True, rem_int=True)
+dict_py = os.path.expanduser("/home/rmeneses/EVB_Variant_Calling/ref_genomes_db.py")
 
-# A função qualicheck
+with open(dict_py, 'r') as f:
+    content = f.read()
+    tree = ast.parse(content, mode='exec')
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "reference_genomes":
+                    ast.literal_eval(node.value)
