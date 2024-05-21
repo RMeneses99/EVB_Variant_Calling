@@ -221,7 +221,7 @@ def pre_processing(data_path, hgt=False, remove_intermediate=False):
     # Initialize variables
     processed_files = []
     if data_path[2]:
-        output_directory = os.path.join(VCSeek_config.BASE_DIRECTORIES[1], VCSeek_config.SUB_DIRECTORY[1]) #! error here because BASE_DIRECTORIES HAS 2 OPTIONS ITS A LIST
+        output_directory = os.path.join(VCSeek_config.BASE_DIRECTORIES[1], VCSeek_config.SUB_DIRECTORY[1]) 
     elif not data_path[2]:
         output_directory = os.path.join(VCSeek_config.BASE_DIRECTORIES[0], VCSeek_config.SUB_DIRECTORY[1])
 
