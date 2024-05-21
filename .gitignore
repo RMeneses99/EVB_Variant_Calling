@@ -3,3 +3,7 @@ BQSR/
 Optimized_Breseq_Variant_Calling/
 Variant_Calling/
 __pycache__/
+ancestral_genomes_db.py
+test.py
+testing_code.py
+set_anc_genomes.py
