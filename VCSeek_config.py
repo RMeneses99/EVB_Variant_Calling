@@ -1,9 +1,8 @@
-import os 
 
 
 BASE_DIRECTORIES = [
-                   "./Variant_Calling", 
-                   "./Optimized_Breseq_Variant_Calling"
+                   "Variant_Calling", 
+                   "Optimized_Breseq_Variant_Calling"
                    ] 
 
 SUB_DIRECTORY = [
@@ -36,9 +35,10 @@ FQ_TERMINATIONS = [
 ALLOWED_REF_GENOME_EXTENSIONS = [
                                 ".fa",
                                 ".fasta",
-                                ".gff3",
-                                ".gbk",
-                                ".gb"]
+                                #! Not supported by bbplsit - ".gff3",
+                                #! Not supported by bbplsit - ".gbk",
+                                #! Not supported by bbplsit - ".gb"
+                                ]
 
 BRESEQ_SUB_DIR = [
                  "00_quality_check_reports", 
@@ -48,5 +48,3 @@ BRESEQ_SUB_DIR = [
                  "05_results", 
                  "06_logs" 
                  ]
-
-TEST = {}

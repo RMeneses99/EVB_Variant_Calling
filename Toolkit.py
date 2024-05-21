@@ -4,6 +4,8 @@ import VCSeek_config
 from ancestral_genomes_db import ancestral_genomes
 
 
+#! add a feature that removes the ref folder created by bbsplit
+#! ERRRORS:  hgt = input() - takes folders with no .fq/fq.gz, fastq/fastq.gz on it. You can also force your way through it without using y or n.
 def pick_ancestral_genome(add_ancestral=False):
     """
     Allows the user to pick a ancestral reference genome by providing their paths and tags. 
@@ -71,9 +73,14 @@ def ask_usr(breseq=False):
     Returns:
         tuple: A tuple containing user-provided directory path, list of FASTQ files, breseq flag, and co-evolution information (list).
     """
+    #! I need to make sure that what the user inputs is a directory and not a file!
+    
     # Initialize a list to store co-evolution information
     co_evo = []
     
+    # Create the absolute path from where the script is stored
+    script_path = os.path.dirname(os.path.realpath(__file__))
+
     # Determine the index of the base directory based on the breseq flag
     base_dir_index = 1 if breseq else 0
     
@@ -82,7 +89,7 @@ def ask_usr(breseq=False):
     
     # Create subdirectories as specified in the configuration
     for dir in sub_dir:
-        os.makedirs(os.path.join(VCSeek_config.BASE_DIRECTORIES[base_dir_index], dir), exist_ok=True)
+        os.makedirs(os.path.join(script_path,VCSeek_config.BASE_DIRECTORIES[base_dir_index], dir), exist_ok=True)
 
     # Prompt the user for the path containing the data to analyze
     usr_path = input(f'{VCSeek_config.PROMPTS[0]}\n')
@@ -125,7 +132,7 @@ def ask_usr(breseq=False):
     fq_list = [f for f in os.listdir(usr_path) if any(f.endswith(termination) for termination in VCSeek_config.FQ_TERMINATIONS)]
 
     # Return user-provided data
-    return usr_path, fq_list, breseq, co_evo
+    return usr_path, fq_list, breseq, co_evo, script_path
 
 
 def pair_by(data_path, search_4_r1='_R1', search_4_r2='_R2'):
@@ -201,8 +208,7 @@ def quali_check(data_path):
     subprocess.run(multiqc_command, check=True, shell=True, capture_output=True, text=True)
 
 
-def pre_processing(data_path, hgt=False, remove_intermediate=False):
-    #! Missing the breseq option 
+def pre_processing(data_path, hgt=False):
     """
     Preprocesses paired-end FASTQ files.
 
@@ -221,9 +227,9 @@ def pre_processing(data_path, hgt=False, remove_intermediate=False):
     # Initialize variables
     processed_files = []
     if data_path[2]:
-        output_directory = os.path.join(VCSeek_config.BASE_DIRECTORIES[1], VCSeek_config.SUB_DIRECTORY[1]) 
+        output_directory = os.path.join(data_path[4], VCSeek_config.BASE_DIRECTORIES[1], VCSeek_config.SUB_DIRECTORY[1])
     elif not data_path[2]:
-        output_directory = os.path.join(VCSeek_config.BASE_DIRECTORIES[0], VCSeek_config.SUB_DIRECTORY[1])
+        output_directory = os.path.join(data_path[4], VCSeek_config.BASE_DIRECTORIES[0], VCSeek_config.SUB_DIRECTORY[1])
 
     # Iterate over each pair of forward and reverse reads
     for fq_forward, fq_reverse in fq_pairs.items():
@@ -249,59 +255,51 @@ def pre_processing(data_path, hgt=False, remove_intermediate=False):
             '--html', '/dev/null',
             '--json', '/dev/null'
         ]
-
+        print(f'Running: {" ".join(fastp_command)}')
         # Run fastp command
         subprocess.run(fastp_command, check=True)
 
         # Determine reference genomes based on HGT flag
+        ref_genomes = []  # Initialize ref_genomes outside of the conditional blocks
         if hgt:
-            ref_genomes = []
-            # Check if any tag from ancestral_genomes is present in the sample name
+        # Check if any tag from ancestral_genomes is present in the sample name
             for tag in ancestral_genomes.values():
                 if tag in fq_forward:
-                    ref_genomes = [k for k, v in ancestral_genomes.items() if v==(tag)]
+                    ref_genomes.extend([k for k, v in ancestral_genomes.items() if v == tag])
         else:
-            ref_genomes = data_path[3]
+            for tag in data_path[3]:
+                ref_genomes.extend([k for k, v in ancestral_genomes.items() if v == tag])
+
+        ref_genomes_str = ','.join(ref_genomes)
 
         # Define bbsplit command
         bbsplit_command = [
-            'bbsplit.sh',
-            f'in1={output_directory}/processed_{fq_forward}',
-            f'in2={output_directory}/processed_{fq_reverse}',
-            'ambig2=best',
-            f'ref={ref_genomes}',
-            f'basename={output_directory}/{sample_tag}%.fq.gz'
-        ]
-
+                          f'bbsplit.sh',
+                          f'in1={output_directory}/processed_{fq_forward}',
+                          f'in2={output_directory}/processed_{fq_reverse}',
+                          f'ambig2=best',
+                          f'ref={ref_genomes_str}',
+                          f'basename={output_directory}/{sample_tag}%.fq.gz',
+                          ]
+        
+        print(f'Running: {" ".join(bbsplit_command)}')
         # Run bbsplit command
-        subprocess.run(bbsplit_command, check=True, capture_output=True, text=True)
+        subprocess.run(bbsplit_command, capture_output=True)
 
         # Define bbsplit reformat command
         bbsplit_reformat = ['reformat.sh',
-                             f'in={output_directory}/{sample_tag}NC_000913.fq.gz',
-                             f'out1={output_directory}/{fq_forward}',
-                             f'out2={output_directory}/{fq_reverse}'
-                             ]
-
+                           f'in={output_directory}/{sample_tag}NC_000913.fq.gz',
+                           f'out1={output_directory}/{fq_forward}',
+                           f'out2={output_directory}/{fq_reverse}'
+                           ]
+        print(f'Running: {" ".join(bbsplit_reformat)}')
         # Run bbsplit reformat command
-        subprocess.run(bbsplit_reformat,shell=True, check=True, capture_output=True)
-
-        # Define intermediate files
-        intermediate_files = [
-            f'{output_directory}/processed_{fq_forward}',
-            f'{output_directory}/processed_{fq_reverse}',
-            f'{output_directory}/{sample_tag}NC_000913.fq.gz'
-        ]
-
-        # Remove intermediate files if specified
-        if remove_intermediate:
-            for int_file in intermediate_files:
-                if os.path.exists(int_file):
-                    os.remove(int_file)
+        subprocess.run(bbsplit_reformat, capture_output=True)
 
         # Print completion message
         print('Preprocessing completed successfully!')
 
+        #! This is not sufficient has if not removed we also include the fastp output files...
         # Add processed files to list
         processed_files.extend(os.listdir(output_directory))
 
