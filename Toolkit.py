@@ -6,75 +6,8 @@ from ancestral_genomes_db import ancestral_genomes
 
 #! add a feature that removes the ref folder created by bbsplit
 #! ERRRORS:  hgt = input() - takes folders with no .fq/fq.gz, fastq/fastq.gz on it. You can also force your way through it without using y or n.
-def pick_ancestral_genome(add_ancestral=False):
-    """
-    Allows the user to pick a ancestral reference genome by providing their paths and tags. 
-    If 'add_ancestral' is True, the function prompts the user to add a  ancestral reference genome.
-    
-    Parameters:
-        add_ancestral (bool): Flag to indicate whether to add a ancestral reference genome or not.
-    
-    Returns:
-        None
-    """
-    # Path to the file containing reference genomes
-    anc_file = os.path.expanduser('./ancestral_genomes_db.py')
-    # Check if the reference file exists
-    ref_exists = os.path.isfile(anc_file)
-    ancestral_genomes = {}
-
-    # Load existing reference genomes if the file exists
-    if ref_exists:
-        with open(anc_file, 'r') as file:
-            content = file.read()
-            tree = ast.parse(content, mode='exec')
-            for node in tree.body:
-                if isinstance(node, ast.Assign):
-                    for target in node.targets:
-                        if isinstance(target, ast.Name) and target.id == "ancestral_genomes":
-                            ancestral_genomes = ast.literal_eval(node.value)
-
-    while add_ancestral:
-        # Get path for new reference genome
-        ancestral_path = input('Enter the path to the reference genome:\n')
-        while not os.path.isfile(ancestral_path) or not any(ancestral_path.endswith(ext) for ext in VCSeek_config.ALLOWED_EXTENSIONS):
-            ancestral_path = input('\nInvalid path or extension. Enter a valid path to the ancestral reference genome:\n')
-
-        # Get tag for the new reference genome
-        print('\n')
-        ancestral_tag = input('Enter a tag for the ancestral reference genome:\n').strip()
-        while not ancestral_tag:
-            ancestral_tag = input('Tag cannot be empty. Enter a tag for the reference genome:\n').strip()
-
-        ancestral_genomes[ancestral_path] = ancestral_tag
-
-        # Write the updated reference genomes to the file
-        with open(anc_file, 'w') as file:
-            file.write(f'ancestral_genomes = {ancestral_genomes}')
-
-        # Ask if the user wants to add another reference genome
-        add_another = input('Do you want to add another ancestral reference genome? (Y or N)\n').strip().lower()
-        if add_another == 'n':
-            break
-        elif add_another != 'y':
-            print('Invalid input!!')
-            add_another = input('Do you want to add another reference genome? (Y or N)\n').strip().lower()
-        else:
-            continue
-
 
 def ask_usr(breseq=False):
-    """
-    Prompt the user for input regarding data analysis, including directory paths and co-evolution information.
-
-    Args:
-        breseq (bool, optional): Flag indicating whether Breseq-specific directories should be created. Defaults to False.
-
-    Returns:
-        tuple: A tuple containing user-provided directory path, list of FASTQ files, breseq flag, and co-evolution information (list).
-    """
-    #! I need to make sure that what the user inputs is a directory and not a file!
-    
     # Initialize a list to store co-evolution information
     co_evo = []
     
@@ -100,37 +33,31 @@ def ask_usr(breseq=False):
 
     # Ask the user if the files are from co-evolved strains
     ask_hgt = input(f'Are these files from co-evolved strains? (Y or N)\n').strip().lower()
-    # If the user indicates co-evolution
+    # If the user does not indicate a valid answer
+    while ask_hgt not in ['n', 'y']:
+        print('Invalid Input!!!')
+        ask_hgt = input(f'Are these files from co-evolved strains? (Y or N)\n').strip().lower()
+
     if ask_hgt == 'y':
-        while True:
-            # Prompt the user for ancestral reference genome tags
-            for i in range(2):
-                tag = input(f'Please provide the ancestral reference genome tag for the {"first" if i == 0 else "second"} isolate\n')
-                while tag not in ancestral_genomes.values():
-                    tag = input(f'Please provide a valid ancestral reference genome tag for the {"first" if i == 0 else "second"} isolate.\n')
-                co_evo.append(tag)
-            if input(f'Do you want to add another ancestral in this co-evolution? (Y or N)\n').strip().lower() != "y":
-                    break
-            elif input(f'Do you want to add another ancestral in this co-evolution? (Y or N)\n').strip().lower() == "n":
-            # Loop to ask if the user wants to add more ancestral genomes
-                while True:
-                    tag_plus = input(f'Please provide the ancestral reference genome tag.\n')
-                    while tag_plus not in ancestral_genomes.values():
-                        tag_plus = input(f'Please provide a valid ancestral reference genome tag.\n')
-                    co_evo.append(tag_plus)
-                    # Ask if the user wants to add another ancestral genome
-                    if input(f'Do you want to add another ancestral in this co-evolution? (Y or N)').strip().lower() != "y":
-                        break
-            else:
-                input(f'Invalid input.Do you want to add another ancestral in this co-evolution? (Y or N)')
-    elif ask_hgt == 'n':
-        pass
-    else:
-        ask_hgt = input(f'Invalid input. Are these files from co-evolved strains? (Y or N)\n').strip().lower()
+        tag = input(f'Please provide the ancestral reference genome tag for the isolate\n')
+        while tag not in ancestral_genomes.values():
+            tag = input(f'Please provide a valid ancestral reference genome tag for the isolate.\n')
+        co_evo.append(tag)
+        add_another_tag = input(f'Do you want to add another ancestral or plasmid in this co-evolution? (Y or N)\n').strip().lower()
+        while add_another_tag not in ['n', 'y']:
+            add_another_tag = input(f'Do you want to add another ancestral or plasmid in this co-evolution? (Y or N)\n').strip().lower()
+        while add_another_tag == "y":
+            tag = input(f'Please provide the ancestral reference genome tag for the isolate\n')
+            while tag not in ancestral_genomes.values():
+                tag = input(f'Please provide a valid ancestral reference genome tag for the isolate.\n')
+            co_evo.append(tag)
+            add_another_tag = input(f'Do you want to add another ancestral or plasmid in this co-evolution? (Y or N)\n').strip().lower()
 
     # Get all FASTQ files in the provided directory
     fq_list = [f for f in os.listdir(usr_path) if any(f.endswith(termination) for termination in VCSeek_config.FQ_TERMINATIONS)]
-
+    # If for some reason duplicated tags are given, set(), method will remove them
+    co_evo = set(co_evo)
+    print(co_evo)
     # Return user-provided data
     return usr_path, fq_list, breseq, co_evo, script_path
 
@@ -257,7 +184,7 @@ def pre_processing(data_path, hgt=False):
         ]
         print(f'Running: {" ".join(fastp_command)}')
         # Run fastp command
-        subprocess.run(fastp_command, check=True)
+        subprocess.run(fastp_command, check=True, capture_output=True)
 
         # Determine reference genomes based on HGT flag
         ref_genomes = []  # Initialize ref_genomes outside of the conditional blocks
@@ -285,13 +212,20 @@ def pre_processing(data_path, hgt=False):
         print(f'Running: {" ".join(bbsplit_command)}')
         # Run bbsplit command
         subprocess.run(bbsplit_command, capture_output=True)
-
+        for i in range(len(ref_genomes)):
+            ref_genome_name = ref_genomes[i].split('/')[-1]
+            for ext in VCSeek_config.ALLOWED_REF_GENOME_EXTENSIONS:
+                if ext in ref_genome_name:
+                    ref_genome_name = ref_genome_name.split(ext)[0]
+                else:
+                    continue
         # Define bbsplit reformat command
-        bbsplit_reformat = ['reformat.sh',
-                           f'in={output_directory}/{sample_tag}NC_000913.fq.gz',
-                           f'out1={output_directory}/{fq_forward}',
-                           f'out2={output_directory}/{fq_reverse}'
-                           ]
+            bbsplit_reformat = ['reformat.sh',
+                               f'in={output_directory}/{sample_tag}{ref_genome_name}.gz',
+                               f'out1={output_directory}/{fq_forward}',
+                               f'out2={output_directory}/{fq_reverse}'
+                               ]
+            
         print(f'Running: {" ".join(bbsplit_reformat)}')
         # Run bbsplit reformat command
         subprocess.run(bbsplit_reformat, capture_output=True)
@@ -306,19 +240,16 @@ def pre_processing(data_path, hgt=False):
     # Return output directory and list of processed files
     return output_directory, processed_files
 
-
-
 #def alignment():
 
 #def optmized_breseq(data_path):
     #for 
 
 def main():
-    pick_ancestral_genome()
     ask_usr()
     quali_check()
     pair_by()
     pre_processing()
 
-
-__name__ = '__main___'
+if __name__ == '__main___':
+    main()
