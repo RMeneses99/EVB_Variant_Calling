@@ -217,18 +217,16 @@ def pre_processing(data_path, hgt=False):
             for ext in VCSeek_config.ALLOWED_REF_GENOME_EXTENSIONS:
                 if ext in ref_genome_name:
                     ref_genome_name = ref_genome_name.split(ext)[0]
-                else:
-                    continue
-        # Define bbsplit reformat command
-            bbsplit_reformat = ['reformat.sh',
-                               f'in={output_directory}/{sample_tag}{ref_genome_name}.gz',
-                               f'out1={output_directory}/{fq_forward}',
-                               f'out2={output_directory}/{fq_reverse}'
-                               ]
+                    # Define bbsplit reformat command
+                    bbsplit_reformat = ['reformat.sh',
+                                       f'in={output_directory}/{sample_tag}{ref_genome_name}.fq.gz',
+                                       f'out1={output_directory}/{fq_forward}',
+                                       f'out2={output_directory}/{fq_reverse}'
+                                       ]
             
-        print(f'Running: {" ".join(bbsplit_reformat)}')
-        # Run bbsplit reformat command
-        subprocess.run(bbsplit_reformat, capture_output=True)
+                    print(f'Running: {" ".join(bbsplit_reformat)}')
+                    # Run bbsplit reformat command
+                    subprocess.run(bbsplit_reformat, capture_output=True)
 
         # Print completion message
         print('Preprocessing completed successfully!')
