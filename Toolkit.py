@@ -223,7 +223,9 @@ def pre_processing(data_path, hgt=False):
                                        f'out1={output_directory}/{fq_forward}',
                                        f'out2={output_directory}/{fq_reverse}'
                                        ]
-            
+#! Right now the two loops are saving in the same files: out1={output_directory}/{fq_forward} and out2={output_directory}/{fq_reverse} I need to fix this.
+
+
                     print(f'Running: {" ".join(bbsplit_reformat)}')
                     # Run bbsplit reformat command
                     subprocess.run(bbsplit_reformat, capture_output=True)

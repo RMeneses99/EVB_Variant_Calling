@@ -4,4 +4,4 @@ pick_ancestral_genome()
 import Toolkit
 
 ask_usr = Toolkit.ask_usr(breseq=True)
-pre_processing = Toolkit.pre_processing(ask_usr)
+pre_processing = Toolkit.pre_processing(ask_usr, hgt=True)
