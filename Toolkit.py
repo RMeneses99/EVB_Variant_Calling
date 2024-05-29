@@ -57,7 +57,6 @@ def ask_usr(breseq=False):
     fq_list = [f for f in os.listdir(usr_path) if any(f.endswith(termination) for termination in VCSeek_config.FQ_TERMINATIONS)]
     # If for some reason duplicated tags are given, set(), method will remove them
     co_evo = set(co_evo)
-    print(co_evo)
     # Return user-provided data
     return usr_path, fq_list, breseq, co_evo, script_path
 
